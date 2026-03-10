@@ -197,4 +197,4 @@ with gr.Blocks(css=custom_css, js=force_dark_js, theme=gr.themes.Default()) as d
 
 # --- 6. RUN THE APP ---
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0")
+    demo.launch(server_name="0.0.0.0", share="True")
