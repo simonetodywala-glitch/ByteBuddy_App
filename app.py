@@ -4,8 +4,6 @@ import gradio as gr
 from openai import OpenAI
 
 # --- 1. API CONFIGURATION ---
-# Using os.getenv is safer for local apps. 
-# Make sure you set your HF_TOKEN in your terminal before running!
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 client = OpenAI(
@@ -17,7 +15,6 @@ client = OpenAI(
 USER_DATA_FILE = "users.json"
 if not os.path.exists(USER_DATA_FILE):
     with open(USER_DATA_FILE, "w") as f:
-        # Default admin account
         json.dump({"admin": {"password": "byte123", "class": "General"}}, f)
 
 # --- 3. UI & LOGIC ---
@@ -74,31 +71,41 @@ custom_css = """
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Syncopate:wght@700&display=swap');
 
 body {
- background-color: #020617 !important;
+    background-color: #020617 !important;
+    overflow: hidden !important;
 }
-.gradio-container { background-color: #020617 !important; border: none !important;}
+.gradio-container {
+    background-color: #020617 !important;
+    border: none !important;
+    overflow: hidden !important;
+}
+.view-page {
+    min-height: 100vh !important;
+    width: 100% !important;
+    position: relative !important;
+}
 #splash-view {
-   display: flex !important;
-   flex-direction: column !important;
-   align-items: center !important;
-   justify-content: center !important;
-   min-height: 80vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
 }
 .logo-text {
-   font-family: 'Orbitron', sans-serif !important;
-   font-weight: 900 !important;
-   font-size: clamp(3rem, 10vw, 6rem) !important;
-   color: #38bdf8 !important;
-   text-transform: uppercase;
-   letter-spacing: 10px;
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 900 !important;
+    font-size: clamp(3rem, 10vw, 6rem) !important;
+    color: #38bdf8 !important;
+    text-transform: uppercase;
+    letter-spacing: 10px;
 }
 .grad-btn {
-   background: linear-gradient(90deg, #1e40af, #3b82f6, #1e40af) !important;
-   color: white !important;
-   padding: 18px 60px !important;
-   border-radius: 50px !important;
-   font-family: 'Syncopate', sans-serif !important;
-   cursor: pointer;
+    background: linear-gradient(90deg, #1e40af, #3b82f6, #1e40af) !important;
+    color: white !important;
+    padding: 18px 60px !important;
+    border-radius: 50px !important;
+    font-family: 'Syncopate', sans-serif !important;
+    cursor: pointer;
 }
 .chatbot span, .chatbot p { color: #cfdae6 !important; }
 """
@@ -107,7 +114,7 @@ body {
 with gr.Blocks(css=custom_css, js=force_dark_js, theme=gr.themes.Default()) as demo:
     current_user_class = gr.State("General")
 
-    with gr.Column(visible=True, elem_id="splash-view") as cover_view:
+    with gr.Column(visible=True, elem_id="splash-view", elem_classes="view-page") as cover_view:
         gr.HTML("""
             <div style="display: flex; flex-direction: column; align-items: center;">
                 <h1 class='logo-text'>BYTEBUDDY</h1>
@@ -116,7 +123,7 @@ with gr.Blocks(css=custom_css, js=force_dark_js, theme=gr.themes.Default()) as d
         """)
         enter_btn = gr.Button("GET STARTED", elem_classes="grad-btn")
 
-    with gr.Column(visible=False) as auth_view:
+    with gr.Column(visible=False, elem_classes="view-page") as auth_view:
         with gr.Row():
             with gr.Column(scale=1): pass
             with gr.Column(scale=2):
@@ -138,7 +145,7 @@ with gr.Blocks(css=custom_css, js=force_dark_js, theme=gr.themes.Default()) as d
                         s_msg = gr.Markdown("")
             with gr.Column(scale=1): pass
 
-    with gr.Column(visible=False) as main_view:
+    with gr.Column(visible=False, elem_classes="view-page") as main_view:
         class_label = gr.Markdown("Chatbot Running")
         chatbot = gr.Chatbot(type="messages", height=550)
         with gr.Row(variant="compact"):
@@ -158,19 +165,19 @@ with gr.Blocks(css=custom_css, js=force_dark_js, theme=gr.themes.Default()) as d
                 u_class = user_entry.get("class", "General") if isinstance(user_entry, dict) else "General"
                 if stored_pw == p:
                     return (gr.update(visible=False), gr.update(visible=True), f"Class: {u_class}", u_class, "")
-            return gr.update(visible=True), gr.update(visible=False), "", "General", " Invalid Credentials"
+            return gr.update(visible=True), gr.update(visible=False), "", "General", "⚠️ Invalid Credentials"
         except Exception as e:
-            return gr.update(visible=True), gr.update(visible=False), "", "General", f" System Error: {str(e)}"
+            return gr.update(visible=True), gr.update(visible=False), "", "General", f"⚠️ System Error: {str(e)}"
 
     l_btn.click(handle_login, [l_user, l_pw], [auth_view, main_view, class_label, current_user_class, l_msg])
 
     def handle_signup(u, p, c):
         if not u or not p or not c: return "Fields Empty"
         with open(USER_DATA_FILE, "r") as f: users = json.load(f)
-        if u in users: return " Username Taken"
+        if u in users: return "⚠️ Username Taken"
         users[u] = {"password": p, "class": c}
         with open(USER_DATA_FILE, "w") as f: json.dump(users, f)
-        return f"Profile Created for {c}. Please Login."
+        return f"✅ Profile Created for {c}. Please Login."
 
     s_btn.click(handle_signup, [s_user, s_pw, s_class], s_msg)
 
